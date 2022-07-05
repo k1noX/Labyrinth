@@ -1,5 +1,5 @@
 from typing import Dict
-from Algorithms.PathFindingAlgorithm import AStarAlgorithm, PathFindingAlgorithm
+from Algorithms.PathFindingAlgorithm import *
 from UserInterface.GridWidget import SolverGridWidget
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
@@ -12,7 +12,7 @@ from math import floor
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()  
-        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm}
+        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm, "BFS": BreadthFirstSearch}
         self.setupUi(self)
 
 
@@ -90,7 +90,7 @@ class MainWindow(QtWidgets.QWidget):
 
 
     def algorithmChangeHandler(self):
-        self.gridWidget.algorithm = self.algorithms.values()[self.algorithmComboBox.currentIndex()]
+        self.gridWidget.algorithm = self.algorithms[self.algorithmComboBox.currentText()]
 
 
     def setupSettingsGroupBox(self):

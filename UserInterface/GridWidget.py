@@ -134,7 +134,7 @@ class SolverGridWidget(WallGridWidget):
         self.target = (0, 0)
         self.source = (42, 34)
         self.algorithm = AStarAlgorithm()
-        self.interval = 100
+        self.interval = 5
 
         self.drawMode = SolverGridWidget.DrawMode.walls
         self.state = SolverGridWidget.State.viewing
