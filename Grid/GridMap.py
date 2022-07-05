@@ -4,14 +4,6 @@ from typing import *
 import enum
 
 
-class ColorState(enum.Enum):
-    none = 0
-    wall = 1
-    target = 2 
-    source = 3
-
-
-
 class GridMap():
     def __init__(self):
         self.edges: Dict[int, List[int]] = {}
@@ -57,5 +49,5 @@ class GridMatrix():
     def setRandom(self, k: float):
         self._cells = [[1 if (randint(0, floor(1 / k)) == 0) else 0 for i in range(self.columns)] for j in range(self.rows)]
 
-    def getCell(self, cell: Tuple[int, int]):
+    def getCell(self, cell: Tuple[int, int]) -> bool:
         return self._cells[cell[0]][cell[1]]
