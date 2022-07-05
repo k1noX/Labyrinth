@@ -1,3 +1,5 @@
+from typing import Dict
+from Algorithms.PathFindingAlgorithm import AStarAlgorithm, PathFindingAlgorithm
 from UserInterface.GridWidget import SolverGridWidget
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
@@ -10,25 +12,24 @@ from math import floor
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()  
+        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm}
         self.setupUi(self)
 
 
     def disableGridEditing(self):
         self.rowSlider.setEnabled(False)
         self.columnSlider.setEnabled(False)
-        self.wallsRadioButton.setEnabled(False)
-        self.sourceRadioButton.setEnabled(False)
-        self.targetRadioButton.setEnabled(False)
         self.randomWallsButton.setEnabled(False)
+        self.drawModeComboBox.setEnabled(False)
+        self.algorithmComboBox.setEnabled(False)
 
 
     def enableGridEditing(self):
         self.rowSlider.setEnabled(True)
         self.columnSlider.setEnabled(True)
-        self.wallsRadioButton.setEnabled(True)
-        self.sourceRadioButton.setEnabled(True)
-        self.targetRadioButton.setEnabled(True)
         self.randomWallsButton.setEnabled(True)
+        self.drawModeComboBox.setEnabled(True)
+        self.algorithmComboBox.setEnabled(True)
 
 
     def startSolving(self):
@@ -83,24 +84,16 @@ class MainWindow(QtWidgets.QWidget):
         self.gridWidget.drawMode = SolverGridWidget.DrawMode.source
 
 
-    def setupUi(self, MainWindow):
-        if MainWindow.objectName():
-            MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(816, 616)
+    def drawModeChangeHandler(self):
+        commands = [self.setWallsDrawMode, self.setTargetDrawMode, self.setSourceDrawMode]
+        return commands[self.drawModeComboBox.currentIndex()]()
 
-        self.centralwidget = QWidget(MainWindow)
-        self.centralwidget.setObjectName(u"centralwidget")
 
-        self.horizontalLayoutWidget = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(8, 8, 800, 600))
-        self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(8, 8, 8, 8)
+    def algorithmChangeHandler(self):
+        self.gridWidget.algorithm = self.algorithms.values()[self.algorithmComboBox.currentIndex()]
 
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.setObjectName(u"verticalLayout")
 
+    def setupSettingsGroupBox(self):
         self.settingsGroupBox = QGroupBox(self.horizontalLayoutWidget)
         self.settingsGroupBox.setObjectName(u"groupBox")
         self.settingsGroupBox.setTitle("Параметры сетки лабиринта")
@@ -140,6 +133,8 @@ class MainWindow(QtWidgets.QWidget):
         self.randomWallsButton.clicked.connect(self.generateRandomGrid)
         self.settingsLayout.addWidget(self.randomWallsButton)
 
+
+    def setupPaintGroupBox(self):
         self.paintGroupBox = QGroupBox(self.horizontalLayoutWidget)
         self.paintGroupBox.setObjectName(u"paintGroupBox")
         self.paintGroupBox.setTitle("Рисование")
@@ -152,47 +147,70 @@ class MainWindow(QtWidgets.QWidget):
         self.paintLayout.setObjectName(u"paintLayout")
         self.paintLayout.setContentsMargins(8, 8, 8, 8)
 
-        self.wallsRadioButton = QRadioButton(self.paintLayoutWidget)
-        self.wallsRadioButton.setObjectName(u"wallsRadioButton")
-        self.wallsRadioButton.setText("Стены")
-        self.wallsRadioButton.setChecked(True)
-        self.wallsRadioButton.clicked.connect(self.setWallsDrawMode)
-        self.paintLayout.addWidget(self.wallsRadioButton)
-        
-        self.targetRadioButton = QRadioButton(self.paintLayoutWidget)
-        self.targetRadioButton.setObjectName(u"targetRadioButton")
-        self.targetRadioButton.setText("Цель")
-        self.targetRadioButton.clicked.connect(self.setTargetDrawMode)
-        self.paintLayout.addWidget(self.targetRadioButton)
-        
-        self.sourceRadioButton = QRadioButton(self.paintLayoutWidget)
-        self.sourceRadioButton.setObjectName(u"sourceRadioButton")
-        self.sourceRadioButton.setText("Старт")
-        self.sourceRadioButton.clicked.connect(self.setSourceDrawMode)
-        self.paintLayout.addWidget(self.sourceRadioButton)
+        self.drawModeComboBox = QComboBox(self.paintLayoutWidget)
+        self.drawModeComboBox.addItem("Стены")
+        self.drawModeComboBox.addItem("Цель")
+        self.drawModeComboBox.addItem("Старт")
+        self.drawModeComboBox.setObjectName(u"comboBox")
+        self.paintLayout.addWidget(self.drawModeComboBox)
+        self.drawModeComboBox.currentIndexChanged.connect(self.drawModeChangeHandler)
 
         self.verticalLayout.addWidget(self.paintGroupBox)
 
+
+    def setupAlgorithmGroupBox(self):
         self.algorithmGroupBox = QGroupBox(self.horizontalLayoutWidget)
         self.algorithmGroupBox.setObjectName(u"algorithmGroupBox")
         self.algorithmGroupBox.setTitle("Управление алгоритмом")
         
-        self.algorithmButtonsVLW = QWidget(self.algorithmGroupBox)
-        self.algorithmButtonsVLW.setObjectName(u"algorithmButtonsVLW")
-        self.algorithmButtonsVLW.setGeometry(QRect(8, 16, 128, 256))
+        self.algorithmLayoutWidget = QWidget(self.algorithmGroupBox)
+        self.algorithmLayoutWidget.setObjectName(u"algorithmLayoutWidget")
+        self.algorithmLayoutWidget.setGeometry(QRect(8, 16, 128, 256))
 
-        self.algorithmButtonsLayout = QVBoxLayout(self.algorithmButtonsVLW)
-        self.algorithmButtonsLayout.setObjectName(u"algorithmButtonsVL")
-        self.algorithmButtonsLayout.setContentsMargins(0, 0, 0, 0)
+        self.algorithmLayout = QVBoxLayout(self.algorithmLayoutWidget)
+        self.algorithmLayout.setObjectName(u"algorithmLayout")
+        self.algorithmLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.startButton = QPushButton(self.algorithmButtonsVLW)
+        self.algorithmComboBox = QComboBox(self.algorithmLayoutWidget)
+
+        for e in self.algorithms.keys():
+            self.algorithmComboBox.addItem(e)
+
+        self.algorithmComboBox.setObjectName(u"algorithmComboBox")
+        self.algorithmComboBox.currentIndexChanged.connect(self.algorithmChangeHandler)
+        self.algorithmLayout.addWidget(self.algorithmComboBox)
+
+        self.startButton = QPushButton(self.algorithmLayoutWidget)
         self.startButton.setObjectName(u"Start")
         self.startButton.setText("Запуск")
         self.startButton.clicked.connect(self.startSolving)
-        self.algorithmButtonsLayout.addWidget(self.startButton)
+        self.algorithmLayout.addWidget(self.startButton)
 
         self.verticalLayout.addWidget(self.algorithmGroupBox)
         self.horizontalLayout.addLayout(self.verticalLayout)
+
+
+    def setupUi(self, MainWindow):
+        if MainWindow.objectName():
+            MainWindow.setObjectName(u"MainWindow")
+        MainWindow.resize(824, 624)
+
+        self.centralwidget = QWidget(MainWindow)
+        self.centralwidget.setObjectName(u"centralwidget")
+
+        self.horizontalLayoutWidget = QWidget(self.centralwidget)
+        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
+        self.horizontalLayoutWidget.setGeometry(QRect(8, 8, 816, 616))
+        self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(8, 8, 8, 8)
+
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+
+        self.setupSettingsGroupBox()
+        self.setupPaintGroupBox()
+        self.setupAlgorithmGroupBox()
 
         self.gridWidget = SolverGridWidget(50, 50, self.horizontalLayoutWidget)
         self.gridWidget.setObjectName(u"Grid Solver")

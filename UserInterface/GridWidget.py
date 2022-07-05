@@ -106,6 +106,7 @@ class WallGridWidget(QtWidgets.QWidget):
             self.update()
 
 
+
 class SolverGridWidget(WallGridWidget):
     colors: Dict[str, QtGui.QColor] = {
         'target': QtGui.QColor(66,139,202), 
@@ -218,7 +219,7 @@ class SolverGridWidget(WallGridWidget):
             left + self.source[1] * self.squareSize, top + self.source[0] * self.squareSize))
 
 
-    def _drawSolveQueue(self, qpainter: QtGui.QPainter):
+    def _drawCurrentSolveStep(self, qpainter: QtGui.QPainter):
         left, top = self.getCanvasOrigin()
 
         objectRect = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
@@ -269,38 +270,40 @@ class SolverGridWidget(WallGridWidget):
         self._drawWalls(qpainter)
 
         if self.state == SolverGridWidget.State.solving:
-            self._drawSolveQueue(qpainter)
+            self._drawCurrentSolveStep(qpainter)
         elif self.state == SolverGridWidget.State.solved:
             self._drawResult(qpainter)
 
         qpainter.end()
 
+
     def mousePressEvent(self, QMouseEvent):
-        left, top = self.getCanvasOrigin()
-        width, height = self.getCanvasSize()
+        if self.state == SolverGridWidget.State.viewing:
+            left, top = self.getCanvasOrigin()
+            width, height = self.getCanvasSize()
 
-        x = QMouseEvent.pos().x()
-        y = QMouseEvent.pos().y()
+            x = QMouseEvent.pos().x()
+            y = QMouseEvent.pos().y()
 
-        i = floor((x - left) / self.squareSize)
-        j = floor((y - top) / self.squareSize)
+            i = floor((x - left) / self.squareSize)
+            j = floor((y - top) / self.squareSize)
 
-        if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
-            if self.drawMode == SolverGridWidget.DrawMode.walls:
-                if QMouseEvent.button() == QtCore.Qt.LeftButton and self.source != (j, i) and self.target != (j, i):
-                    self.grid.setCell((j, i))
+            if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
+                if self.drawMode == SolverGridWidget.DrawMode.walls:
+                    if QMouseEvent.button() == QtCore.Qt.LeftButton and self.source != (j, i) and self.target != (j, i):
+                        self.grid.setCell((j, i))
 
-                if QMouseEvent.button() == QtCore.Qt.RightButton:
-                    self.grid.resetCell((j, i))  
+                    if QMouseEvent.button() == QtCore.Qt.RightButton:
+                        self.grid.resetCell((j, i))  
 
-            elif self.drawMode == SolverGridWidget.DrawMode.target:
-                if QMouseEvent.button() == QtCore.Qt.LeftButton:
-                    if self.grid.getCell((j, i)) == 0:
-                        self.target = (j, i)
+                elif self.drawMode == SolverGridWidget.DrawMode.target:
+                    if QMouseEvent.button() == QtCore.Qt.LeftButton:
+                        if self.grid.getCell((j, i)) == 0:
+                            self.target = (j, i)
 
-            elif self.drawMode == SolverGridWidget.DrawMode.source:
-                if QMouseEvent.button() == QtCore.Qt.LeftButton:
-                    if self.grid.getCell((j, i)) == 0:
-                        self.source = (j, i)
-            
-            self.update()
+                elif self.drawMode == SolverGridWidget.DrawMode.source:
+                    if QMouseEvent.button() == QtCore.Qt.LeftButton:
+                        if self.grid.getCell((j, i)) == 0:
+                            self.source = (j, i)
+                
+                self.update()
