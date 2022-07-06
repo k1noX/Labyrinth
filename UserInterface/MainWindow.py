@@ -4,7 +4,8 @@ from UserInterface.GridWidget import SolverGridWidget
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
 from PyQt5.QtWidgets import *  
-import PyQt5.QtWidgets as QtWidgets
+
+
 
 from math import floor
 
@@ -12,7 +13,7 @@ from math import floor
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()  
-        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm, "BFS": BreadthFirstSearch}
+        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm, "BFS": BreadthFirstSearch, "Dijkstra Search": DijkstraSearch}
         self.setupUi(self)
 
 

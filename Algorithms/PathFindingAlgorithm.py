@@ -3,7 +3,7 @@ from Grid.GridMap import *
 from abc import ABC, abstractmethod
 from typing import *
 from queue import PriorityQueue, Queue
-
+from Algorithms.ErrorHandler import *
 
 class SolveQueue():
 
@@ -47,15 +47,145 @@ class PathFindingAlgorithm(ABC):
     @staticmethod
     def _reconstructPath(cameFrom: Dict[Tuple[int, int], Tuple[int, int]],
                      source: Tuple[int, int], target: Tuple[int, int]) -> List[Tuple[int, int]]:
-
+        
         current: Tuple[int, int] = target
         path: List[Tuple[int, int]] = []
-        while current != source: 
+
+        while current != source:
             path.append(current)
             current = cameFrom[current]
+
         path.append(source) 
         path.reverse() 
         return path
+
+
+
+class BreadthFirstSearch(PathFindingAlgorithm):
+    @staticmethod
+    def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
+        frontier = PriorityQueue()
+
+        frontier.put(source)
+        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
+
+        cameFrom[source] = None
+
+        
+        while not frontier.empty():
+            current = frontier.get()
+            if current == target:
+                break
+            
+            for next in gridMatrix.neighbors(current):
+                if next not in cameFrom:
+                    frontier.put(next)
+                    cameFrom[next] = current
+        
+
+        
+        return PathFindingAlgorithm._reconstructPath(cameFrom, source, target)
+
+                
+
+
+    @staticmethod
+    def getSolveQueue(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]) -> SolveQueue:
+        frontier = PriorityQueue()
+        frontier.put(source)
+        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
+        cameFrom[source] = None
+
+        queue = SolveQueue()
+        
+        while not frontier.empty():
+
+            current = frontier.get()
+            if current == target:
+                break
+            
+            selected = set()
+
+            for next in gridMatrix.neighbors(current):
+
+                queue.enqueue(selected, cameFrom, next)
+
+                if next not in cameFrom:
+                    selected.add(next)
+
+                    frontier.put(next)
+                    cameFrom[next] = current
+    
+
+        return queue
+
+
+
+class DijkstraSearch(PathFindingAlgorithm):
+    @staticmethod
+    def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
+        frontier = PriorityQueue()
+        frontier.put((0, source))
+        
+        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
+        costSoFar: Dict[Tuple(int, int), float] = {}
+        cameFrom[source] = None
+        costSoFar[source] = 0
+        
+        while not frontier.empty():
+            _, current = frontier.get()
+            
+            if current == target:
+                break
+            
+
+            for next in gridMatrix.neighbors(current):
+                newCost = costSoFar[current] + 1
+               
+                if next not in costSoFar or newCost < costSoFar[next]:
+                    costSoFar[next] = newCost
+                    priority = newCost 
+                    frontier.put((priority, next))
+                    cameFrom[next] = current
+        
+
+
+        return PathFindingAlgorithm._reconstructPath(cameFrom, source, target)
+
+
+    @staticmethod
+    def getSolveQueue(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]) -> SolveQueue:
+        frontier = PriorityQueue()
+        frontier.put((0, source))
+        
+        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
+        costSoFar: Dict[Tuple(int, int), float] = {}
+
+        cameFrom[source] = None
+        costSoFar[source] = 0
+
+        queue = SolveQueue()
+        
+        while not frontier.empty():
+            _, current = frontier.get()
+            if current == target:
+                break
+            
+            selected = set()
+
+            for next in gridMatrix.neighbors(current):
+                newCost = costSoFar[current] + 1
+                queue.enqueue(selected, cameFrom, next)
+                if next not in costSoFar or newCost < costSoFar[next]:
+                    selected.add(next)
+                    costSoFar[next] = newCost
+                    priority = newCost 
+                    frontier.put((priority, next))
+                    cameFrom[next] = current
+    
+
+        return queue
+
 
 
 class AStarAlgorithm(PathFindingAlgorithm):
@@ -86,8 +216,7 @@ class AStarAlgorithm(PathFindingAlgorithm):
                 if next not in costSoFar or newCost < costSoFar[next]:
                     costSoFar[next] = newCost
                     priority = newCost + AStarAlgorithm._heuristic(next, target)
-                    frontier.put((current, next))
-
+                    frontier.put((priority, next))
                     cameFrom[next] = current
         
 
@@ -128,58 +257,4 @@ class AStarAlgorithm(PathFindingAlgorithm):
 
         return queue
 
-class BreadthFirstSearch(PathFindingAlgorithm):
-    @staticmethod
-    def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
-        frontier = PriorityQueue()
 
-        frontier.put(source)
-        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
-
-        cameFrom[source] = None
-
-        
-        while not frontier.empty():
-            current = frontier.get()
-            if current == target:
-                break
-            
-            for next in gridMatrix.neighbors(current):
-                if next not in cameFrom:
-                    frontier.put(next)
-                    cameFrom[next] = current
-        
-
-
-        return PathFindingAlgorithm._reconstructPath(cameFrom, source, target)
-
-
-    @staticmethod
-    def getSolveQueue(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]) -> SolveQueue:
-        frontier = PriorityQueue()
-        frontier.put(source)
-        cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
-        cameFrom[source] = None
-
-        queue = SolveQueue()
-        
-        while not frontier.empty():
-
-            current = frontier.get()
-            if current == target:
-                break
-            
-            selected = set()
-
-            for next in gridMatrix.neighbors(current):
-
-                queue.enqueue(selected, cameFrom, next)
-
-                if next not in cameFrom:
-                    selected.add(next)
-
-                    frontier.put(next)
-                    cameFrom[next] = current
-    
-
-        return queue

@@ -7,7 +7,7 @@ from typing import *
 
 from Grid.GridMap import *
 from Algorithms.PathFindingAlgorithm import *
-
+from Algorithms.ErrorHandler import *
 
 class WallGridWidget(QtWidgets.QWidget):
 
@@ -126,7 +126,7 @@ class SolverGridWidget(WallGridWidget):
         viewing = 1
         solving = 2
         solved = 3
-
+        #noPath = 4 #см. SolverGridWidget::trySolving()
 
 
     def __init__(self, rows: int, columns: int, *args, **kwargs):
@@ -171,6 +171,15 @@ class SolverGridWidget(WallGridWidget):
 
     def solve(self):
         return self.algorithm.solve(self.grid, self.source, self.target)
+
+
+    def trySolving(self):
+        self.solveQueue = self.algorithm.getSolveQueue(self.grid, self.source, self.target)
+        self.used = []
+        self.currentPath = Queue()
+        #TODO: прогнать алгоритм зараннее,  
+        #чтобы задать enum.State значение noPath? 
+        #см. SolverGridWidget::PaintEvent()
 
 
     def startSolving(self):
@@ -258,7 +267,7 @@ class SolverGridWidget(WallGridWidget):
 
         for x, y in self.solve():
             qpainter.drawRect(objectRect.translated(
-                left + y * self.squareSize, top + x * self.squareSize))
+                left + y * self.squareSize, top + x * self.squareSize))   
 
 
     def paintEvent(self, event):
@@ -268,8 +277,9 @@ class SolverGridWidget(WallGridWidget):
 
         self._drawScene(qpainter)
         self._drawWalls(qpainter)
-
-        if self.state == SolverGridWidget.State.solving:
+        # добавить условие state == noPath чтобы даже не начинать рисовать?
+        # см. SolverGridWidget::trySolving()
+        if self.state == SolverGridWidget.State.solving: 
             self._drawCurrentSolveStep(qpainter)
         elif self.state == SolverGridWidget.State.solved:
             self._drawResult(qpainter)
