@@ -38,6 +38,12 @@ class GridMatrix():
         return results
 
 
+    def resize(self, rows: int, columns: int) -> None:
+        self._cells = [[self._cells[j][i] if (j < self.rows and i < self.columns) else 0 for i in range(columns)] for j in range(rows)]
+        self.rows = rows
+        self.columns = columns
+
+
     def setCell(self, cell: Tuple[int, int]):
         self._cells[cell[0]][cell[1]] = 1
 

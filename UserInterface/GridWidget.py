@@ -7,7 +7,7 @@ from typing import *
 
 from Grid.GridMap import *
 from Algorithms.PathFindingAlgorithm import *
-from Algorithms.ErrorHandler import *
+
 
 class WallGridWidget(QtWidgets.QWidget):
 
@@ -84,35 +84,15 @@ class WallGridWidget(QtWidgets.QWidget):
 
         self._drawScene(qpainter)
         self._drawWalls(qpainter)
-    
-
-    def mousePressEvent(self, QMouseEvent):
-        width, height = self.getCanvasSize()
-        left, top = self.getCanvasOrigin()
-
-        x = QMouseEvent.pos().x()
-        y = QMouseEvent.pos().y()
-
-        i = floor((x - left) / self.squareSize)
-        j = floor((y - top) / self.squareSize)
-
-        if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
-            if QMouseEvent.button() == QtCore.Qt.LeftButton:
-                self.grid.setCell((j, i))
-
-            if QMouseEvent.button() == QtCore.Qt.RightButton:
-                self.grid.resetCell((j, i))    
-            
-            self.update()
 
 
 
 class SolverGridWidget(WallGridWidget):
     colors: Dict[str, QtGui.QColor] = {
-        'target': QtGui.QColor(66,139,202), 
-        'source': QtGui.QColor(91,192,222), 
-        'selected': QtGui.QColor(192,255,201), 
-        'used': QtGui.QColor(32,178,170)
+        'target': QtGui.QColor(66, 139, 202), 
+        'source': QtGui.QColor(91, 192, 222), 
+        'selected': QtGui.QColor(192, 255, 201), 
+        'used': QtGui.QColor(32, 178, 170)
     }
 
 
@@ -124,46 +104,50 @@ class SolverGridWidget(WallGridWidget):
 
     class State(enum.Enum):
         viewing = 1
-        solving = 2
-        solved = 3
-        #noPath = 4 #см. SolverGridWidget::trySolving()
+        drawing = 2
+        erasing = 3
+        solving = 4
+        solved = 5
+
 
 
     def __init__(self, rows: int, columns: int, *args, **kwargs):
         super().__init__(rows, columns, *args, **kwargs)
         self.target = (0, 0)
-        self.source = (42, 34)
+        self.source = (rows - 1, columns - 1)
         self.algorithm = AStarAlgorithm()
-        self.interval = 5
+
+        self._interval = 100
 
         self.drawMode = SolverGridWidget.DrawMode.walls
-        self.state = SolverGridWidget.State.viewing
+        self.installEventFilter(self)
 
-        self.timer = QtCore.QTimer(self, timeout = self._dequeueSolveStep, interval = self.interval)
+        self._state = SolverGridWidget.State.viewing
+        self._stateChanged = []
+
+        self.timer = QtCore.QTimer(self, timeout = self.__dequeueSolveStep, interval = self._interval)
 
 
-    def setAlgorithm(self, algorithm: PathFindingAlgorithm):
+    def setAlgorithm(self, algorithm: PathFindingAlgorithm) -> None:
         self.algorithm = algorithm
-        self.setAlgorithmSolveQueue()
 
 
-    def setAlgorithmSolveQueue(self):
+    def setAlgorithmSolveQueue(self) -> None:
         self.solveQueue = self.algorithm.getSolveQueue(self.grid, self.source, self.target)
         self.used = []
-        self.currentPath = Queue()
+        self.currentPath = []
 
 
-    def resizeGrid(self, rows, columns):
-        self.grid._cells = [[self.grid._cells[j][i] if (j < self.grid.rows and i < self.grid.columns) else 0 for i in range(columns)] for j in range(rows)]
-        self.grid.rows = rows
-        self.grid.columns = columns
+    def resizeGrid(self, rows, columns) -> None:
+        self.grid.resize(rows, columns)
 
         if self.target[0] >= self.grid.rows or self.target[1] >= self.grid.columns:
             self.target = (self.grid.rows - 1, self.grid.columns - 1)
-
+            self.grid.resetCell(self.target)
 
         if self.source[0] >= self.grid.rows or self.source[1] >= self.grid.columns:
             self.source = (self.grid.rows - 1, self.grid.columns - 1)
+            self.grid.resetCell(self.source)
 
         self.setSquareSize()
         self.update()
@@ -173,147 +157,226 @@ class SolverGridWidget(WallGridWidget):
         return self.algorithm.solve(self.grid, self.source, self.target)
 
 
-    def trySolving(self):
-        self.solveQueue = self.algorithm.getSolveQueue(self.grid, self.source, self.target)
-        self.used = []
-        self.currentPath = Queue()
-        #TODO: прогнать алгоритм зараннее,  
-        #чтобы задать enum.State значение noPath? 
-        #см. SolverGridWidget::PaintEvent()
+    def addStateCallback(self, callback):
+        if callable(callback):
+            self._stateChanged.append(callback)
 
 
-    def startSolving(self):
+    @property
+    def interval(self):
+        return self._interval
+
+
+    @interval.setter
+    def interval(self, newValue):
+        if self.state == SolverGridWidget.State.viewing:
+            self._interval = newValue
+            self.timer.deleteLater()
+            self.timer = QtCore.QTimer(self, timeout = self.__dequeueSolveStep, interval = self._interval)
+
+    @property
+    def stateChanged(self):
+        return self._stateChanged
+
+
+    @stateChanged.setter
+    def stateChanged(self, newStateChanged):
+        for i in self.newStateChanged:
+            if callable(i):
+                self._stateChanged.append(i)
+
+
+    @property
+    def state(self):
+        return self._state
+
+
+    @state.setter
+    def state(self, newState):
+        if self._state == SolverGridWidget.State.solving:
+            if newState == SolverGridWidget.State.solved:
+                self.__stopSolving()
+            elif newState == SolverGridWidget.State.viewing:
+                self.__stopSolving()
+                self._state = newState
+
+        elif self._state == SolverGridWidget.State.solved:
+            if newState == SolverGridWidget.State.solving:
+                self.__startSolving()
+            elif newState == SolverGridWidget.State.viewing:
+                self._state = newState
+
+        elif self._state == SolverGridWidget.State.viewing:
+            if newState == SolverGridWidget.State.solved:
+                self.__startSolving()
+                self.__stopSolving()
+            elif newState == SolverGridWidget.State.solving:
+                self.__startSolving()
+            else:
+                self._state = newState
+        
+        else:
+            if newState == SolverGridWidget.State.solving:
+                self._state == newState
+
+        for i in self._stateChanged:
+            i()
+
+
+
+    def __startSolving(self):
         self.setAlgorithmSolveQueue()
 
         self.timer.start()
+        self._state = SolverGridWidget.State.solving
 
-        self.state = SolverGridWidget.State.solving
 
-
-    def stopSolving(self):
-        self.setAlgorithmSolveQueue()
-
+    def __stopSolving(self) -> None:
         self.timer.stop()
-        self.timer.deleteLater()
-
-        self.state = SolverGridWidget.State.solved
-        self.timer = QtCore.QTimer(self, timeout = self._dequeueSolveStep, interval = self.interval)
+        self._state = SolverGridWidget.State.solved
         self.update()
 
 
-    def _dequeueSolveStep(self):
+    def __dequeueSolveStep(self) -> None:
         if self.solveQueue.queue.empty():
-            self.stopSolving()
+            self.__stopSolving()
         else:
             used, selected, current = self.solveQueue.dequeue()
             self.used = {*self.used, *used}
-            self.currentPath.put((selected, current))
+            self.currentPath = [selected, current]
             self.update()
 
 
-    def _drawScene(self, qpainter: QtGui.QPainter):
-        super()._drawScene(qpainter)
-        
+    def __drawSourceAndTarget(self, painter: QtGui.QPainter) -> None:
         left, top = self.getCanvasOrigin()
+        rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
 
-        objectRect = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
-
-        qpainter.setOpacity(1)
-        qpainter.setBrush(SolverGridWidget.colors['target'])
-        qpainter.drawRect(objectRect.translated(
+        painter.setOpacity(1)
+        painter.setBrush(SolverGridWidget.colors['target'])
+        painter.drawRect(rectangle.translated(
             left + self.target[1] * self.squareSize, top + self.target[0] * self.squareSize))
 
-        qpainter.setBrush(SolverGridWidget.colors['source'])
-        qpainter.drawRect(objectRect.translated(
+        painter.setBrush(SolverGridWidget.colors['source'])
+        painter.drawRect(rectangle.translated(
             left + self.source[1] * self.squareSize, top + self.source[0] * self.squareSize))
 
 
-    def _drawCurrentSolveStep(self, qpainter: QtGui.QPainter):
+    def __drawCurrentSolveStep(self, painter: QtGui.QPainter) -> None:
         left, top = self.getCanvasOrigin()
 
-        objectRect = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
+        rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
         
-        qpainter.setOpacity(0.25)
-        qpainter.setBrush(SolverGridWidget.colors['used'])
+        painter.setOpacity(0.25)
+        painter.setBrush(SolverGridWidget.colors['used'])
 
         for x, y in self.used:
-            qpainter.drawRect(objectRect.translated(
+            painter.drawRect(rectangle.translated(
                 left + y * self.squareSize, top + x * self.squareSize))
 
-        qpainter.setOpacity(1)
-        qpainter.setBrush(SolverGridWidget.colors['selected'])
+        painter.setOpacity(1)
+        painter.setBrush(SolverGridWidget.colors['selected'])
 
-        if self.currentPath.empty():
+        if len(self.currentPath) == 0:
             pass
-        elif self.state == SolverGridWidget.State.solved:
-            for x, y in self.solve():
-                qpainter.drawRect(objectRect.translated(
-                    left + y * self.squareSize, top + x * self.squareSize))
         else:
-            path, current = self.currentPath.get()
+            path, current = self.currentPath
+            self.currentPath = []
 
             for x, y in PathFindingAlgorithm._reconstructPath(path, self.source, current):
-                qpainter.drawRect(objectRect.translated(
+                painter.drawRect(rectangle.translated(
                     left + y * self.squareSize, top + x * self.squareSize))
 
     
-    def _drawResult(self, qpainter: QtGui.QPainter):
+    def __drawResult(self, painter: QtGui.QPainter):
         left, top = self.getCanvasOrigin()
 
-        objectRect = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
+        rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
 
-        qpainter.setOpacity(1)
-        qpainter.setBrush(SolverGridWidget.colors['selected'])
+        painter.setOpacity(1)
+        painter.setBrush(SolverGridWidget.colors['selected'])
 
-        for x, y in self.solve():
-            qpainter.drawRect(objectRect.translated(
-                left + y * self.squareSize, top + x * self.squareSize))   
+        result = self.solve()
+
+        if result is not None:
+            for x, y in result:
+                painter.drawRect(rectangle.translated(
+                    left + y * self.squareSize, top + x * self.squareSize))
+
+        else: # `result` might be None
+            self.state = SolverGridWidget.State.viewing
+
+            messageBox = QtWidgets.QMessageBox()
+            messageBox.setIcon(QtWidgets.QMessageBox.Warning)
+            messageBox.setText("Невозможно выйти из лабиринта!")
+            messageBox.setInformativeText(f"Пути из точки {self.source} в {self.target} не существует!")
+            messageBox.setWindowTitle("Ошибка!")
+            messageBox.exec()
 
 
-    def paintEvent(self, event):
-        qpainter = QtGui.QPainter(self)
-        qpainter.translate(.5, .5)
-        qpainter.setRenderHints(qpainter.Antialiasing)
 
-        self._drawScene(qpainter)
-        self._drawWalls(qpainter)
-        # добавить условие state == noPath чтобы даже не начинать рисовать?
-        # см. SolverGridWidget::trySolving()
-        if self.state == SolverGridWidget.State.solving: 
-            self._drawCurrentSolveStep(qpainter)
+
+    def paintEvent(self, event: QtCore.QEvent) -> None:
+        painter = QtGui.QPainter(self)
+        painter.translate(.5, .5)
+        painter.setRenderHints(painter.Antialiasing)
+
+        self._drawScene(painter)
+        self._drawWalls(painter)
+
+        self.__drawSourceAndTarget(painter)
+
+        if self.state == SolverGridWidget.State.solving:
+            self.__drawCurrentSolveStep(painter)
         elif self.state == SolverGridWidget.State.solved:
-            self._drawResult(qpainter)
+            self.__drawResult(painter)
+        
+        painter.end()   
 
-        qpainter.end()
 
-
-    def mousePressEvent(self, QMouseEvent):
+    def eventFilter(self, source: QtWidgets.QWidget, event: QtCore.QEvent) -> bool:
         if self.state == SolverGridWidget.State.viewing:
-            left, top = self.getCanvasOrigin()
-            width, height = self.getCanvasSize()
+            if event.type() == QtCore.QEvent.MouseButtonPress:
+                if event.button() == QtCore.Qt.LeftButton:
+                    self._state = SolverGridWidget.State.drawing
 
-            x = QMouseEvent.pos().x()
-            y = QMouseEvent.pos().y()
+                elif event.button() == QtCore.Qt.RightButton:
+                    self._state = SolverGridWidget.State.erasing
 
-            i = floor((x - left) / self.squareSize)
-            j = floor((y - top) / self.squareSize)
+        elif self.state == SolverGridWidget.State.drawing or self.state == SolverGridWidget.State.erasing:
+            if event.type() == QtCore.QEvent.MouseButtonRelease:
+                self._state = SolverGridWidget.State.viewing
 
-            if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
-                if self.drawMode == SolverGridWidget.DrawMode.walls:
-                    if QMouseEvent.button() == QtCore.Qt.LeftButton and self.source != (j, i) and self.target != (j, i):
-                        self.grid.setCell((j, i))
+        return super().eventFilter(source, event)
 
-                    if QMouseEvent.button() == QtCore.Qt.RightButton:
-                        self.grid.resetCell((j, i))  
 
-                elif self.drawMode == SolverGridWidget.DrawMode.target:
-                    if QMouseEvent.button() == QtCore.Qt.LeftButton:
-                        if self.grid.getCell((j, i)) == 0:
-                            self.target = (j, i)
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        left, top = self.getCanvasOrigin()
+        width, height = self.getCanvasSize()
 
-                elif self.drawMode == SolverGridWidget.DrawMode.source:
-                    if QMouseEvent.button() == QtCore.Qt.LeftButton:
-                        if self.grid.getCell((j, i)) == 0:
-                            self.source = (j, i)
+        x = event.pos().x()
+        y = event.pos().y()
+
+        i = floor((x - left) / self.squareSize)
+        j = floor((y - top) / self.squareSize)
+
+        if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
+            if self.drawMode == SolverGridWidget.DrawMode.walls:
+                if self.state == SolverGridWidget.State.drawing:
+                    self.grid.setCell((j, i))
+                elif self.state == SolverGridWidget.State.erasing:
+                    self.grid.resetCell((j, i))  
+
+            elif self.drawMode == SolverGridWidget.DrawMode.target:
+                if self.state == SolverGridWidget.State.drawing:
+                    if self.grid.getCell((j, i)) == 0:
+                        self.target = (j, i)
+
+            elif self.drawMode == SolverGridWidget.DrawMode.source:
+                if self.state == SolverGridWidget.State.drawing:
+                    if self.grid.getCell((j, i)) == 0:
+                        self.source = (j, i)
                 
-                self.update()
+            self.update()
+        
+        return super().mouseMoveEvent(event)
+
