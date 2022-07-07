@@ -1,4 +1,3 @@
-from select import select
 from Grid.GridMap import *
 from abc import ABC, abstractmethod
 from typing import *
@@ -48,14 +47,19 @@ class PathFindingAlgorithm(ABC):
     def _reconstructPath(cameFrom: Dict[Tuple[int, int], Tuple[int, int]],
                      source: Tuple[int, int], target: Tuple[int, int]) -> List[Tuple[int, int]]:
 
-        current: Tuple[int, int] = target
-        path: List[Tuple[int, int]] = []
-        while current != source: 
-            path.append(current)
-            current = cameFrom[current]
-        path.append(source) 
-        path.reverse() 
-        return path
+        if target in cameFrom.keys():
+            current: Tuple[int, int] = target
+            path: List[Tuple[int, int]] = []
+            while current != source: 
+                path.append(current)
+                current = cameFrom[current]
+                
+            path.append(source) 
+            path.reverse() 
+            return path
+        else:
+            return None
+        
 
 
 class AStarAlgorithm(PathFindingAlgorithm):
@@ -67,7 +71,7 @@ class AStarAlgorithm(PathFindingAlgorithm):
 
 
     @staticmethod
-    def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
+    def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]) -> List[Tuple[int, int]]:
         frontier = PriorityQueue()
         frontier.put((0, source))
         cameFrom: Dict[Tuple(int, int), Optional[Tuple(int, int)]] = {}
@@ -89,8 +93,6 @@ class AStarAlgorithm(PathFindingAlgorithm):
                     frontier.put((priority, next))
                     cameFrom[next] = current
         
-
-
         return PathFindingAlgorithm._reconstructPath(cameFrom, source, target)
 
 

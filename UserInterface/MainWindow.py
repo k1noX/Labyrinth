@@ -15,6 +15,8 @@ class MainWindow(QtWidgets.QWidget):
         self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm}
         self.setupUi(self)
 
+        self.gridWidget.addStateCallback(self.onStateChanged)
+
 
     def disableGridEditing(self):
         self.rowSlider.setEnabled(False)
@@ -22,6 +24,7 @@ class MainWindow(QtWidgets.QWidget):
         self.randomWallsButton.setEnabled(False)
         self.drawModeComboBox.setEnabled(False)
         self.algorithmComboBox.setEnabled(False)
+        self.intervalSlider.setEnabled(False)
 
 
     def enableGridEditing(self):
@@ -30,28 +33,27 @@ class MainWindow(QtWidgets.QWidget):
         self.randomWallsButton.setEnabled(True)
         self.drawModeComboBox.setEnabled(True)
         self.algorithmComboBox.setEnabled(True)
+        self.intervalSlider.setEnabled(True)
 
 
-    def startSolving(self):
-        self.startButton.setText("Завершить")
-        self.gridWidget.startSolving()
-        self.startButton.clicked.connect(self.stopSolving)
-
-        self.disableGridEditing()
-
-
-    def stopSolving(self):
-        self.startButton.setText("Вернуться")
-        self.gridWidget.stopSolving()
-        self.startButton.clicked.connect(self.continueSolving)
+    def onStateChanged(self) -> None:
+        if self.gridWidget.state == SolverGridWidget.State.solving:
+            self.startButton.setText("Пропустить")
+            self.disableGridEditing()
+        elif self.gridWidget.state == SolverGridWidget.State.solved:
+            self.startButton.setText("Завершить")
+        elif self.gridWidget.state == SolverGridWidget.State.viewing:
+            self.startButton.setText("Запуск")
+            self.enableGridEditing()
 
 
-    def continueSolving(self):
-        self.startButton.setText("Запуск")
-        self.gridWidget.state = SolverGridWidget.State.viewing
-        self.startButton.clicked.connect(self.startSolving)
-
-        self.enableGridEditing()
+    def processStartButton(self) -> None:
+        if self.gridWidget.state == SolverGridWidget.State.solving:
+            self.gridWidget.state = SolverGridWidget.State.solved
+        elif self.gridWidget.state == SolverGridWidget.State.solved:
+            self.gridWidget.state = SolverGridWidget.State.viewing
+        elif self.gridWidget.state == SolverGridWidget.State.viewing:
+            self.gridWidget.state = SolverGridWidget.State.solving
 
 
     def resizeGrid(self):
@@ -90,7 +92,11 @@ class MainWindow(QtWidgets.QWidget):
 
 
     def algorithmChangeHandler(self):
-        self.gridWidget.algorithm = self.algorithms.values()[self.algorithmComboBox.currentIndex()]
+        self.gridWidget.algorithm = self.algorithms[self.algorithmComboBox.currentText()]
+
+
+    def changeInterval(self):
+        self.gridWidget.interval = floor(self.intervalSlider.value() / 1000 * 990) + 10
 
 
     def setupSettingsGroupBox(self):
@@ -141,7 +147,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.paintLayoutWidget = QWidget(self.paintGroupBox)
         self.paintLayoutWidget.setObjectName(u"paintLayoutWidget")
-        self.paintLayoutWidget.setGeometry(QRect(8, 16, 128, 128))
+        self.paintLayoutWidget.setGeometry(QRect(8, 16, 160, 128))
 
         self.paintLayout = QVBoxLayout(self.paintLayoutWidget)
         self.paintLayout.setObjectName(u"paintLayout")
@@ -165,11 +171,28 @@ class MainWindow(QtWidgets.QWidget):
         
         self.algorithmLayoutWidget = QWidget(self.algorithmGroupBox)
         self.algorithmLayoutWidget.setObjectName(u"algorithmLayoutWidget")
-        self.algorithmLayoutWidget.setGeometry(QRect(8, 16, 128, 256))
+        self.algorithmLayoutWidget.setGeometry(QRect(8, 16, 160, 128))
 
         self.algorithmLayout = QVBoxLayout(self.algorithmLayoutWidget)
         self.algorithmLayout.setObjectName(u"algorithmLayout")
-        self.algorithmLayout.setContentsMargins(0, 0, 0, 0)
+        self.algorithmLayout.setContentsMargins(8, 8, 8, 8)
+        
+        self.intervalLabel = QLabel(self.algorithmLayoutWidget)
+        self.intervalLabel.setObjectName(u"algorithmLabel")
+        self.intervalLabel.setText("Задержка:")
+        self.algorithmLayout.addWidget(self.intervalLabel)
+
+        self.intervalSlider = QSlider(self.algorithmLayoutWidget)
+        self.intervalSlider.setObjectName(u"intervalSlider")
+        self.intervalSlider.setOrientation(Qt.Horizontal)
+        self.intervalSlider.setValue(45)
+        self.algorithmLayout.addWidget(self.intervalSlider)
+        self.intervalSlider.valueChanged.connect(self.changeInterval)
+
+        self.algorithmLabel = QLabel(self.algorithmLayoutWidget)
+        self.algorithmLabel.setObjectName(u"algorithmLabel")
+        self.algorithmLabel.setText("Алгоритм:")
+        self.algorithmLayout.addWidget(self.algorithmLabel)
 
         self.algorithmComboBox = QComboBox(self.algorithmLayoutWidget)
 
@@ -183,7 +206,7 @@ class MainWindow(QtWidgets.QWidget):
         self.startButton = QPushButton(self.algorithmLayoutWidget)
         self.startButton.setObjectName(u"Start")
         self.startButton.setText("Запуск")
-        self.startButton.clicked.connect(self.startSolving)
+        self.startButton.clicked.connect(self.processStartButton)
         self.algorithmLayout.addWidget(self.startButton)
 
         self.verticalLayout.addWidget(self.algorithmGroupBox)
