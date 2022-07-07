@@ -4,15 +4,6 @@ from typing import *
 import enum
 
 
-class GridMap():
-    def __init__(self):
-        self.edges: Dict[int, List[int]] = {}
-
-
-    def neighbours(self, id: int) -> List[int]:
-        return self._edges[id]
-
-
 class GridMatrix():
     def __init__(self, rows: int, columns: int):
         self.rows = rows
@@ -55,5 +46,7 @@ class GridMatrix():
     def setRandom(self, k: float):
         self._cells = [[1 if (randint(0, floor(1 / k)) == 0) else 0 for i in range(self.columns)] for j in range(self.rows)]
 
+
     def getCell(self, cell: Tuple[int, int]) -> bool:
         return self._cells[cell[0]][cell[1]]
+
