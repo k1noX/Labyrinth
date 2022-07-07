@@ -1,5 +1,5 @@
-
-from Algorithms.PathFindingAlgorithm import AStarAlgorithm, PathFindingAlgorithm
+from typing import Dict
+from Algorithms.PathFindingAlgorithm import AStarAlgorithm, BreadthFirstSearch, DijkstraSearch, PathFindingAlgorithm
 from UserInterface.GridWidget import SolverGridWidget
 from Grid.GridMap import *
 
@@ -14,7 +14,7 @@ from typing import Dict
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()  
-        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm}
+        self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm, "Dijkstra Search": DijkstraSearch, "Breadth-first Search": BreadthFirstSearch}
         self.setupUi(self)
 
         self.gridWidget.addStateCallback(self.onStateChanged)
