@@ -56,7 +56,7 @@ class WallGridWidget(QtWidgets.QWidget):
         qpainter.setBrush(QtGui.QColor(217, 83, 79))
         for row in range(self.grid.rows):
             for column in range(self.grid.columns):
-                if self.grid.getCell((row, column)) == 1:
+                if self.grid.getCell((row, column)):
                     qpainter.drawRect(objectRect.translated(
                         left + column * self.squareSize, top + row * self.squareSize))
 
@@ -239,7 +239,7 @@ class SolverGridWidget(WallGridWidget):
 
     def __dequeueSolveStep(self) -> None:
         if self.solveQueue.queue.empty():
-            self.__stopSolving()
+            self.state = SolverGridWidget.State.solved
         else:
             used, selected, current = self.solveQueue.dequeue()
             self.used = {*self.used, *used}
@@ -368,12 +368,12 @@ class SolverGridWidget(WallGridWidget):
 
             elif self.drawMode == SolverGridWidget.DrawMode.target:
                 if self.state == SolverGridWidget.State.drawing:
-                    if self.grid.getCell((j, i)) == 0:
+                    if not self.grid.getCell((j, i)):
                         self.target = (j, i)
 
             elif self.drawMode == SolverGridWidget.DrawMode.source:
                 if self.state == SolverGridWidget.State.drawing:
-                    if self.grid.getCell((j, i)) == 0:
+                    if not self.grid.getCell((j, i)):
                         self.source = (j, i)
                 
             self.update()

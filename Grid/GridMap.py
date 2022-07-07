@@ -14,10 +14,10 @@ class GridMap():
 
 
 class GridMatrix():
-    def __init__(self, rows: int, columns: int):
+    def __init__(self, rows: int, columns: int, preset: bool = False):
         self.rows = rows
         self.columns = columns
-        self._cells: List[List[int]] = [[0 for i in range(rows)] for j in range(columns)]
+        self._cells: List[List[int]] = [[preset for i in range(rows)] for j in range(columns)]
 
     
     def inBounds(self, cell: Tuple[int, int]) -> bool:
@@ -39,21 +39,46 @@ class GridMatrix():
 
 
     def resize(self, rows: int, columns: int) -> None:
-        self._cells = [[self._cells[j][i] if (j < self.rows and i < self.columns) else 0 for i in range(columns)] for j in range(rows)]
+        self._cells = [[self._cells[j][i] if (j < self.rows and i < self.columns) else False for i in range(columns)] for j in range(rows)]
         self.rows = rows
         self.columns = columns
 
 
     def setCell(self, cell: Tuple[int, int]):
-        self._cells[cell[0]][cell[1]] = 1
+        self._cells[cell[0]][cell[1]] = True
 
 
     def resetCell(self, cell: Tuple[int, int]):
-        self._cells[cell[0]][cell[1]] = 0
+        self._cells[cell[0]][cell[1]] = False
 
-
-    def setRandom(self, k: float):
-        self._cells = [[1 if (randint(0, floor(1 / k)) == 0) else 0 for i in range(self.columns)] for j in range(self.rows)]
 
     def getCell(self, cell: Tuple[int, int]) -> bool:
         return self._cells[cell[0]][cell[1]]
+
+    
+    @staticmethod
+    def createMaze(rows: int, columns: int):
+        result = GridMatrix(rows, columns, preset=True)
+
+        for x in range(result.columns - 1):
+            result.resetCell((x + 1, 0))
+        
+        for y in range(0, result.rows - 1, 2):
+            runSet = []
+            for x in range(0, result.columns - 1, 2):
+                result.resetCell((x, y))
+                runSet.append((x, y))
+                if x + 1 < result.rows and randint(0, 1) == 1:
+                    result.resetCell((x - 1, y))
+                else:
+                    u, v = runSet[randint(0, len(runSet) - 1)]
+                    
+                    for s in range(u, x):
+                        result.resetCell((s, y))
+
+                    result.resetCell((u, y - 1))
+
+                    runSet.clear()
+        
+        return result
+

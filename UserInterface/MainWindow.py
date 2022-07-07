@@ -1,12 +1,14 @@
-from typing import Dict
+
 from Algorithms.PathFindingAlgorithm import AStarAlgorithm, PathFindingAlgorithm
 from UserInterface.GridWidget import SolverGridWidget
+from Grid.GridMap import *
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
 from PyQt5.QtWidgets import *  
 import PyQt5.QtWidgets as QtWidgets
 
 from math import floor
+from typing import Dict
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -65,12 +67,12 @@ class MainWindow(QtWidgets.QWidget):
 
 
     def generateRandomGrid(self):
-        self.gridWidget.grid.setRandom(k=0.25)
+        self.gridWidget.grid = GridMatrix.createMaze(self.gridWidget.grid.rows, self.gridWidget.grid.columns)
 
-        if self.gridWidget.grid.getCell(self.gridWidget.target) == 1:
+        if self.gridWidget.grid.getCell(self.gridWidget.target):
             self.gridWidget.grid.resetCell(self.gridWidget.target)
 
-        if self.gridWidget.grid.getCell(self.gridWidget.source) == 1:
+        if self.gridWidget.grid.getCell(self.gridWidget.source):
             self.gridWidget.grid.resetCell(self.gridWidget.source)
 
         self.update()
@@ -96,7 +98,7 @@ class MainWindow(QtWidgets.QWidget):
 
 
     def changeInterval(self):
-        self.gridWidget.interval = floor(self.intervalSlider.value() / 1000 * 990) + 10
+        self.gridWidget.interval = floor(self.intervalSlider.value() / 100 * 990) + 10
 
 
     def setupSettingsGroupBox(self):
