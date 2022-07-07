@@ -50,14 +50,14 @@ class WallGridWidget(QtWidgets.QWidget):
     def _drawWalls(self, qpainter: QtGui.QPainter):
         left, top = self.getCanvasOrigin()
 
-        objectRect = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
+        rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
 
         qpainter.setOpacity(1)
-        qpainter.setBrush(QtGui.QColor(217, 83, 79))
+        qpainter.setBrush(QtGui.QColor(32, 32, 32))
         for row in range(self.grid.rows):
             for column in range(self.grid.columns):
                 if self.grid.getCell((row, column)):
-                    qpainter.drawRect(objectRect.translated(
+                    qpainter.drawRect(rectangle.translated(
                         left + column * self.squareSize, top + row * self.squareSize))
 
 
@@ -108,7 +108,6 @@ class SolverGridWidget(WallGridWidget):
         erasing = 3
         solving = 4
         solved = 5
-
 
 
     def __init__(self, rows: int, columns: int, *args, **kwargs):
@@ -174,6 +173,7 @@ class SolverGridWidget(WallGridWidget):
             self.timer.deleteLater()
             self.timer = QtCore.QTimer(self, timeout = self.__dequeueSolveStep, interval = self._interval)
 
+
     @property
     def stateChanged(self):
         return self._stateChanged
@@ -222,6 +222,7 @@ class SolverGridWidget(WallGridWidget):
         for i in self._stateChanged:
             i()
 
+        self.update()
 
 
     def __startSolving(self):
@@ -313,8 +314,6 @@ class SolverGridWidget(WallGridWidget):
             messageBox.exec()
 
 
-
-
     def paintEvent(self, event: QtCore.QEvent) -> None:
         painter = QtGui.QPainter(self)
         painter.translate(.5, .5)
@@ -322,7 +321,6 @@ class SolverGridWidget(WallGridWidget):
 
         self._drawScene(painter)
         self._drawWalls(painter)
-
         self.__drawSourceAndTarget(painter)
 
         if self.state == SolverGridWidget.State.solving:
