@@ -8,7 +8,7 @@ class GridMatrix():
     def __init__(self, rows: int, columns: int, preset: bool = False):
         self.rows = rows
         self.columns = columns
-        self._cells: List[List[int]] = [[preset for i in range(rows)] for j in range(columns)]
+        self._cells: List[List[int]] = [[preset for i in range(columns)] for j in range(rows)]
 
     
     def inBounds(self, cell: Tuple[int, int]) -> bool:
@@ -52,22 +52,22 @@ class GridMatrix():
         result = GridMatrix(rows, columns, preset=True)
 
         for x in range(result.columns - 1):
-            result.resetCell((x + 1, 0))
+            result.resetCell((0, x + 1))
         
         for y in range(0, result.rows - 1, 2):
             runSet = []
             for x in range(0, result.columns - 1, 2):
-                result.resetCell((x, y))
-                runSet.append((x, y))
+                result.resetCell((y, x))
+                runSet.append((y, x))
                 if x + 1 < result.rows and randint(0, 1) == 1:
-                    result.resetCell((x - 1, y))
+                    result.resetCell((y, x - 1))
                 else:
                     u, v = runSet[randint(0, len(runSet) - 1)]
                     
-                    for s in range(u, x):
-                        result.resetCell((s, y))
+                    for s in range(v, x):
+                        result.resetCell((y, s))
 
-                    result.resetCell((u, y - 1))
+                    result.resetCell((y - 1, v))
 
                     runSet.clear()
         

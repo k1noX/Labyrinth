@@ -142,7 +142,7 @@ class SolverGridWidget(WallGridWidget):
         self.grid.resize(rows, columns)
 
         if self.target[0] >= self.grid.rows or self.target[1] >= self.grid.columns:
-            self.target = (self.grid.rows - 1, self.grid.columns - 1)
+            self.target = (0, 0)
             self.grid.resetCell(self.target)
 
         if self.source[0] >= self.grid.rows or self.source[1] >= self.grid.columns:
