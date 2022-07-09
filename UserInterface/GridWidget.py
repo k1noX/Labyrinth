@@ -18,7 +18,7 @@ class WallGridWidget(QtWidgets.QWidget):
         self.grid = GridMatrix(rows, columns)
 
 
-    def setSquareSize(self):
+    def setSquareSize(self) -> None:
         reference = self.width() * self.grid.rows / self.grid.columns
 
         if reference > self.height():
@@ -27,7 +27,7 @@ class WallGridWidget(QtWidgets.QWidget):
             self.squareSize = (self.width() - 1) / self.grid.columns
 
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event) -> None:
         return self.setSquareSize()
 
 
@@ -47,7 +47,7 @@ class WallGridWidget(QtWidgets.QWidget):
         return (left, top)
 
 
-    def _drawWalls(self, qpainter: QtGui.QPainter):
+    def _drawWalls(self, qpainter: QtGui.QPainter) -> None:
         left, top = self.getCanvasOrigin()
 
         rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
@@ -61,7 +61,7 @@ class WallGridWidget(QtWidgets.QWidget):
                         left + column * self.squareSize, top + row * self.squareSize))
 
 
-    def _drawScene(self, qpainter: QtGui.QPainter):
+    def _drawScene(self, qpainter: QtGui.QPainter) -> None:
         width, height = self.getCanvasSize()
         left, top = self.getCanvasOrigin()
 
@@ -77,7 +77,7 @@ class WallGridWidget(QtWidgets.QWidget):
             x += self.squareSize
 
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QtCore.QEvent) -> None:
         qpainter = QtGui.QPainter(self)
         qpainter.translate(.5, .5)
         qpainter.setRenderHints(qpainter.Antialiasing)
@@ -88,11 +88,13 @@ class WallGridWidget(QtWidgets.QWidget):
 
 
 class SolverGridWidget(WallGridWidget):
+
+
     colors: Dict[str, QtGui.QColor] = {
-        'target': QtGui.QColor(66, 139, 202), 
-        'source': QtGui.QColor(91, 192, 222), 
-        'selected': QtGui.QColor(192, 255, 201), 
-        'used': QtGui.QColor(32, 178, 170)
+        'target': QtGui.QColor(190, 140, 163), 
+        'source': QtGui.QColor(140, 163, 190), 
+        'selected': QtGui.QColor(163, 190, 140), 
+        'used': QtGui.QColor(163, 190, 140)
     }
 
 
@@ -137,7 +139,7 @@ class SolverGridWidget(WallGridWidget):
         self.currentPath = []
 
 
-    def resizeGrid(self, rows, columns) -> None:
+    def resizeGrid(self, rows: int, columns: int) -> None:
         self.grid.resize(rows, columns)
 
         if self.target[0] >= self.grid.rows or self.target[1] >= self.grid.columns:
@@ -152,11 +154,11 @@ class SolverGridWidget(WallGridWidget):
         self.update()
 
 
-    def solve(self):
+    def solve(self) -> List[Tuple[int, int]]:
         return self.algorithm.solve(self.grid, self.source, self.target)
 
 
-    def addStateCallback(self, callback):
+    def addStateCallback(self, callback: List[Callable]) -> None:
         if callable(callback):
             self._stateChanged.append(callback)
 
@@ -167,7 +169,7 @@ class SolverGridWidget(WallGridWidget):
 
 
     @interval.setter
-    def interval(self, newValue):
+    def interval(self, newValue: int):
         if self.state == SolverGridWidget.State.viewing:
             self._interval = newValue
             self.timer.deleteLater()
@@ -180,19 +182,19 @@ class SolverGridWidget(WallGridWidget):
 
 
     @stateChanged.setter
-    def stateChanged(self, newStateChanged):
+    def stateChanged(self, newStateChanged: List["SolverGridWidget.State"]):
         for i in self.newStateChanged:
             if callable(i):
                 self._stateChanged.append(i)
 
 
     @property
-    def state(self):
+    def state(self) -> "SolverGridWidget.State":
         return self._state
 
 
     @state.setter
-    def state(self, newState):
+    def state(self, newState: "SolverGridWidget.State") -> None:
         if self._state == SolverGridWidget.State.solving:
             if newState == SolverGridWidget.State.solved:
                 self.__stopSolving()
@@ -288,7 +290,7 @@ class SolverGridWidget(WallGridWidget):
                     left + y * self.squareSize, top + x * self.squareSize))
 
     
-    def __drawResult(self, painter: QtGui.QPainter):
+    def __drawResult(self, painter: QtGui.QPainter) -> None:
         left, top = self.getCanvasOrigin()
 
         rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)

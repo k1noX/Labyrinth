@@ -51,8 +51,8 @@ class GridMatrix():
     def createMaze(rows: int, columns: int):
         result = GridMatrix(rows, columns, preset=True)
 
-        x = randint(0, floor((result.columns - 1) / 2)) * 2 + 1
-        y = randint(0, floor((result.rows - 1) / 2)) * 2 + 1
+        x = randint(0, floor((result.columns - 1) / 2)) * 2 
+        y = randint(0, floor((result.rows - 1) / 2)) * 2 
 
         result.resetCell((y, x))
 

@@ -98,8 +98,6 @@ class BreadthFirstSearch(PathFindingAlgorithm):
         
         return PathFindingAlgorithm._reconstructPath(cameFrom, source, target)
 
-                
-
 
     @staticmethod
     def getSolveQueue(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]) -> SolveQueue:

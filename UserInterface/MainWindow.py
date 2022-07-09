@@ -11,7 +11,7 @@ from math import floor
 from typing import Dict
 
 
-class MainWindow(QtWidgets.QWidget):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()  
         self.algorithms: Dict[str, PathFindingAlgorithm] = {"A*": AStarAlgorithm, "Dijkstra Search": DijkstraSearch, "Breadth-first Search": BreadthFirstSearch}
@@ -101,55 +101,90 @@ class MainWindow(QtWidgets.QWidget):
         self.gridWidget.interval = floor(self.intervalSlider.value() / 100 * 990) + 10
 
 
+    def setupGridSizeGroupBox(self):
+        self.gridSizeGroupBox = QGroupBox(self.settingsGroupBox)
+        self.gridSizeGroupBox.setObjectName(u"groupBox")
+        self.gridSizeGroupBox.setTitle("Размеры")
+
+        self.gridSizeLayoutWidget = QWidget(self.gridSizeGroupBox)
+        self.gridSizeLayoutWidget.setObjectName(u"gridSizeLayoutWidget")
+        self.gridSizeLayoutWidget.setGeometry(QRect(8, 16, 150, 128))
+
+        self.gridSizeLayout = QVBoxLayout(self.gridSizeLayoutWidget)
+        self.gridSizeLayout.setObjectName(u"gridSizeLayout")
+        self.gridSizeLayout.setContentsMargins(8, 8, 8, 8)
+        self.settingsLayout.addWidget(self.gridSizeGroupBox)
+
+        self.rowLabel = QLabel(self.gridSizeLayoutWidget)
+        self.rowLabel.setObjectName(u"rowLabel")
+        self.gridSizeLayout.addWidget(self.rowLabel)
+
+        self.rowSlider = QSlider(self.gridSizeLayoutWidget)
+        self.rowSlider.setObjectName(u"rowSlider")
+        self.rowSlider.setOrientation(Qt.Horizontal)
+        self.rowSlider.setValue(45)
+        self.gridSizeLayout.addWidget(self.rowSlider)
+
+        self.columnLabel = QLabel(self.gridSizeLayoutWidget)
+        self.columnLabel.setObjectName(u"columnLabel")
+        self.gridSizeLayout.addWidget(self.columnLabel)
+
+        self.columnSlider = QSlider(self.settingsLayoutWidget)
+        self.columnSlider.setObjectName(u"columnSlider")
+        self.columnSlider.setOrientation(Qt.Horizontal)
+        self.columnSlider.setValue(45)
+        self.gridSizeLayout.addWidget(self.columnSlider)
+        self.gridSizeGroupBox.setMinimumHeight(144)
+
+
+    def setupMazeGenerationGroupBox(self):
+        self.mazeGenerationGroupBox = QGroupBox(self.settingsLayoutWidget)
+        self.mazeGenerationGroupBox.setObjectName(u"mazeGenerationGroupBox")
+        self.mazeGenerationGroupBox.setTitle("Генерация лабиринта")
+
+        self.mazeGenerationLayoutWidget = QWidget(self.mazeGenerationGroupBox)
+        self.mazeGenerationLayoutWidget.setObjectName(u"settingsLayoutWidget")
+        self.mazeGenerationLayoutWidget.setGeometry(QRect(8, 8, 150, 64))
+
+        self.mazeGenerationLayout = QVBoxLayout(self.mazeGenerationLayoutWidget)
+        self.mazeGenerationLayout.setObjectName(u"settingsLayout")
+        self.mazeGenerationLayout.setContentsMargins(8, 8, 8, 8)
+        self.settingsLayout.addWidget(self.mazeGenerationGroupBox)
+
+        self.randomWallsButton = QPushButton(self.mazeGenerationGroupBox)
+        self.randomWallsButton.setObjectName(u"randomWallsButton")
+        self.randomWallsButton.setText("Сгенерировать стены")
+        self.randomWallsButton.clicked.connect(self.generateRandomGrid)
+        self.mazeGenerationLayout.addWidget(self.randomWallsButton)
+
+
     def setupSettingsGroupBox(self):
-        self.settingsGroupBox = QGroupBox(self.horizontalLayoutWidget)
+        self.settingsGroupBox = QGroupBox(self.centralwidget)
         self.settingsGroupBox.setObjectName(u"groupBox")
-        self.settingsGroupBox.setTitle("Параметры сетки лабиринта")
+        self.settingsGroupBox.setTitle("Редактирование сетки лабиринта")
+        self.settingsGroupBox.setFixedHeight(352)
 
         self.settingsLayoutWidget = QWidget(self.settingsGroupBox)
         self.settingsLayoutWidget.setObjectName(u"settingsLayoutWidget")
-        self.settingsLayoutWidget.setGeometry(QRect(8, 16, 160, 128))
+        self.settingsLayoutWidget.setGeometry(QRect(8, 16, 176, 320))
 
         self.settingsLayout = QVBoxLayout(self.settingsLayoutWidget)
         self.settingsLayout.setObjectName(u"settingsLayout")
         self.settingsLayout.setContentsMargins(8, 8, 8, 8)
         self.verticalLayout.addWidget(self.settingsGroupBox)
 
-        self.rowLabel = QLabel(self.settingsLayoutWidget)
-        self.rowLabel.setObjectName(u"rowLabel")
-        self.settingsLayout.addWidget(self.rowLabel)
-
-        self.rowSlider = QSlider(self.settingsLayoutWidget)
-        self.rowSlider.setObjectName(u"rowSlider")
-        self.rowSlider.setOrientation(Qt.Horizontal)
-        self.rowSlider.setValue(45)
-        self.settingsLayout.addWidget(self.rowSlider)
-
-        self.columnLabel = QLabel(self.settingsLayoutWidget)
-        self.columnLabel.setObjectName(u"columnLabel")
-        self.settingsLayout.addWidget(self.columnLabel)
-
-        self.columnSlider = QSlider(self.settingsLayoutWidget)
-        self.columnSlider.setObjectName(u"columnSlider")
-        self.columnSlider.setOrientation(Qt.Horizontal)
-        self.columnSlider.setValue(45)
-        self.settingsLayout.addWidget(self.columnSlider)
-
-        self.randomWallsButton = QPushButton(self.settingsLayoutWidget)
-        self.randomWallsButton.setObjectName(u"randomWallsButton")
-        self.randomWallsButton.setText("Сгенерировать стены")
-        self.randomWallsButton.clicked.connect(self.generateRandomGrid)
-        self.settingsLayout.addWidget(self.randomWallsButton)
+        self.setupGridSizeGroupBox()
+        self.setupMazeGenerationGroupBox()
 
 
     def setupPaintGroupBox(self):
-        self.paintGroupBox = QGroupBox(self.horizontalLayoutWidget)
+        self.paintGroupBox = QGroupBox(self.centralwidget)
         self.paintGroupBox.setObjectName(u"paintGroupBox")
         self.paintGroupBox.setTitle("Рисование")
 
         self.paintLayoutWidget = QWidget(self.paintGroupBox)
         self.paintLayoutWidget.setObjectName(u"paintLayoutWidget")
-        self.paintLayoutWidget.setGeometry(QRect(8, 16, 160, 128))
+        self.paintLayoutWidget.setGeometry(QRect(8, 8, 150, 64))
 
         self.paintLayout = QVBoxLayout(self.paintLayoutWidget)
         self.paintLayout.setObjectName(u"paintLayout")
@@ -163,34 +198,23 @@ class MainWindow(QtWidgets.QWidget):
         self.paintLayout.addWidget(self.drawModeComboBox)
         self.drawModeComboBox.currentIndexChanged.connect(self.drawModeChangeHandler)
 
-        self.verticalLayout.addWidget(self.paintGroupBox)
+        self.settingsLayout.addWidget(self.paintGroupBox)
 
 
     def setupAlgorithmGroupBox(self):
-        self.algorithmGroupBox = QGroupBox(self.horizontalLayoutWidget)
+        self.algorithmGroupBox = QGroupBox(self.centralwidget)
         self.algorithmGroupBox.setObjectName(u"algorithmGroupBox")
         self.algorithmGroupBox.setTitle("Управление алгоритмом")
         
         self.algorithmLayoutWidget = QWidget(self.algorithmGroupBox)
         self.algorithmLayoutWidget.setObjectName(u"algorithmLayoutWidget")
-        self.algorithmLayoutWidget.setGeometry(QRect(8, 16, 160, 128))
+        self.algorithmLayoutWidget.setGeometry(QRect(8, 16, 166, 128))
+        self.algorithmLayoutWidget.setFixedHeight(128)
 
         self.algorithmLayout = QVBoxLayout(self.algorithmLayoutWidget)
         self.algorithmLayout.setObjectName(u"algorithmLayout")
         self.algorithmLayout.setContentsMargins(8, 8, 8, 8)
         
-        self.intervalLabel = QLabel(self.algorithmLayoutWidget)
-        self.intervalLabel.setObjectName(u"algorithmLabel")
-        self.intervalLabel.setText("Задержка:")
-        self.algorithmLayout.addWidget(self.intervalLabel)
-
-        self.intervalSlider = QSlider(self.algorithmLayoutWidget)
-        self.intervalSlider.setObjectName(u"intervalSlider")
-        self.intervalSlider.setOrientation(Qt.Horizontal)
-        self.intervalSlider.setValue(45)
-        self.algorithmLayout.addWidget(self.intervalSlider)
-        self.intervalSlider.valueChanged.connect(self.changeInterval)
-
         self.algorithmLabel = QLabel(self.algorithmLayoutWidget)
         self.algorithmLabel.setObjectName(u"algorithmLabel")
         self.algorithmLabel.setText("Алгоритм:")
@@ -205,6 +229,18 @@ class MainWindow(QtWidgets.QWidget):
         self.algorithmComboBox.currentIndexChanged.connect(self.algorithmChangeHandler)
         self.algorithmLayout.addWidget(self.algorithmComboBox)
 
+        self.intervalLabel = QLabel(self.algorithmLayoutWidget)
+        self.intervalLabel.setObjectName(u"algorithmLabel")
+        self.intervalLabel.setText("Задержка:")
+        self.algorithmLayout.addWidget(self.intervalLabel)
+
+        self.intervalSlider = QSlider(self.algorithmLayoutWidget)
+        self.intervalSlider.setObjectName(u"intervalSlider")
+        self.intervalSlider.setOrientation(Qt.Horizontal)
+        self.intervalSlider.setValue(45)
+        self.algorithmLayout.addWidget(self.intervalSlider)
+        self.intervalSlider.valueChanged.connect(self.changeInterval)
+
         self.startButton = QPushButton(self.algorithmLayoutWidget)
         self.startButton.setObjectName(u"Start")
         self.startButton.setText("Запуск")
@@ -212,32 +248,38 @@ class MainWindow(QtWidgets.QWidget):
         self.algorithmLayout.addWidget(self.startButton)
 
         self.verticalLayout.addWidget(self.algorithmGroupBox)
-        self.horizontalLayout.addLayout(self.verticalLayout)
+        self.horizontalLayout.addWidget(self.verticalLayoutWidget)
 
 
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
         if MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(824, 624)
+        MainWindow.setMinimumSize(824, 624)
 
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
 
-        self.horizontalLayoutWidget = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(8, 8, 816, 616))
-        self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
+        self.gridLayout = QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName(u"gridLayout")
+
+        self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(8, 8, 8, 8)
+        self.horizontalLayout.setAlignment(Qt.AlignCenter)
 
-        self.verticalLayout = QVBoxLayout()
+        self.verticalLayoutWidget = QWidget(self.centralwidget)
+        self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
+        self.verticalLayoutWidget.setGeometry(QRect(0, 0, 210, 512))
+        self.verticalLayoutWidget.setFixedSize(210, 528)
+
+        self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
 
         self.setupSettingsGroupBox()
         self.setupPaintGroupBox()
         self.setupAlgorithmGroupBox()
 
-        self.gridWidget = SolverGridWidget(50, 50, self.horizontalLayoutWidget)
+        self.gridWidget = SolverGridWidget(50, 50, self.centralwidget)
         self.gridWidget.setObjectName(u"Grid Solver")
 
         self.rowLabel.setText("Количество строк: " + str(self.gridWidget.grid.rows))
@@ -248,4 +290,6 @@ class MainWindow(QtWidgets.QWidget):
 
         self.horizontalLayout.addWidget(self.gridWidget)
 
+        self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+        self.setCentralWidget(self.centralwidget)
         QMetaObject.connectSlotsByName(MainWindow)
