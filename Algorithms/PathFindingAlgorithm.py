@@ -5,7 +5,6 @@ from queue import PriorityQueue, Queue
 
 class SolveQueue():
 
-
     class SolveStep():
         def __init__(self, used: List[Tuple[int, int]], path: List[int], selected: Tuple[int, int]):
             self.properties = {
@@ -74,6 +73,7 @@ class PathFindingAlgorithm(ABC):
 
 
 class BreadthFirstSearch(PathFindingAlgorithm):
+
     @staticmethod
     def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
         frontier = Queue()
@@ -132,6 +132,7 @@ class BreadthFirstSearch(PathFindingAlgorithm):
 
 
 class DijkstraSearch(PathFindingAlgorithm):
+
     @staticmethod
     def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
         frontier = PriorityQueue()
@@ -199,6 +200,7 @@ class DijkstraSearch(PathFindingAlgorithm):
 
 
 class AStarAlgorithm(PathFindingAlgorithm):
+    
     @staticmethod
     def _heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
         (x1, y1) = a

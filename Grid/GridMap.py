@@ -16,7 +16,7 @@ class GridMatrix():
     
 
     def passable(self, id: Tuple[int, int]) -> bool:
-        return self._cells[id[0]][id[1]] == 0
+        return not self._cells[id[0]][id[1]]
 
 
     def neighbors(self, id: Tuple[int, int]) -> Iterator[Tuple[int, int]]:

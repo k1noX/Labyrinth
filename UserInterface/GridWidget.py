@@ -5,6 +5,7 @@ import PyQt5.QtGui as QtGui
 from math import floor
 from typing import *
 import enum
+import colorsys
 
 from Grid.GridMap import *
 from Algorithms.PathFindingAlgorithm import *
@@ -92,10 +93,10 @@ class SolverGridWidget(WallGridWidget):
 
 
     colors: Dict[str, QtGui.QColor] = {
-        'target': QtGui.QColor(190, 140, 163), 
-        'source': QtGui.QColor(140, 163, 190), 
+        'target': QtGui.QColor(0, 0, 255), 
+        'source': QtGui.QColor(255, 0, 0), 
         'selected': QtGui.QColor(163, 190, 140), 
-        'used': QtGui.QColor(163, 190, 140)
+        'used': QtGui.QColor(128, 128, 128)
     }
 
 
@@ -270,7 +271,7 @@ class SolverGridWidget(WallGridWidget):
 
         rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
         
-        painter.setOpacity(0.25)
+        painter.setOpacity(0.5)
         painter.setBrush(SolverGridWidget.colors['used'])
 
         for x, y in self.used:
@@ -285,10 +286,22 @@ class SolverGridWidget(WallGridWidget):
         else:
             path, current = self.currentPath
             self.currentPath = []
+            
+            path = PathFindingAlgorithm._reconstructPath(path, self.source, current)
+            color = SolverGridWidget.colors['selected']
 
-            for x, y in PathFindingAlgorithm._reconstructPath(path, self.source, current):
+            for node in range(len(path)):
+                
+                if (len(path)) != 1:
+                    color = colorsys.hls_to_rgb(2/3 * node / (len(path) - 1), 0.5, 1)
+                    r, g, b = (floor(255 * c) for c in color)
+                    color = QtGui.QColor(r, g, b)
+
+                painter.setBrush(color)
+
+
                 painter.drawRect(rectangle.translated(
-                    left + y * self.squareSize, top + x * self.squareSize))
+                    left + path[node][1] * self.squareSize, top + path[node][0] * self.squareSize))
 
     
     def __drawResult(self, painter: QtGui.QPainter) -> None:
@@ -296,15 +309,36 @@ class SolverGridWidget(WallGridWidget):
 
         rectangle = QtCore.QRectF(0, 0, self.squareSize, self.squareSize)
 
-        painter.setOpacity(1)
-        painter.setBrush(SolverGridWidget.colors['selected'])
-
         result = self.solve()
 
         if result is not None:
-            for x, y in result:
+            while not self.solveQueue.queue.empty():
+                used, _, _ = self.solveQueue.dequeue()
+                self.used = {*self.used, *used}
+
+            painter.setOpacity(0.33)
+            painter.setBrush(SolverGridWidget.colors['used'])
+
+            for x, y in self.used:
                 painter.drawRect(rectangle.translated(
                     left + y * self.squareSize, top + x * self.squareSize))
+
+            painter.setOpacity(1)
+            painter.setBrush(SolverGridWidget.colors['selected'])
+            color = SolverGridWidget.colors['selected']
+
+            for node in range(len(result)):
+                
+                if (len(result)) != 1:
+                    color = colorsys.hls_to_rgb(2/3 * node / (len(result) - 1), 0.5, 1)
+                    r, g, b = (floor(255 * c) for c in color)
+                    color = QtGui.QColor(r, g, b)
+
+                painter.setBrush(color)
+
+
+                painter.drawRect(rectangle.translated(
+                    left + result[node][1] * self.squareSize, top + result[node][0] * self.squareSize))
 
         else: # `result` might be None
             self.state = SolverGridWidget.State.viewing

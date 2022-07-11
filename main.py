@@ -2,7 +2,9 @@ import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
 import sys
 
+
 from UserInterface.MainWindow import MainWindow
+
 
 if __name__ == '__main__':
 
