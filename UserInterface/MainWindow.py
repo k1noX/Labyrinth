@@ -2,6 +2,7 @@ from typing import Dict
 from Algorithms.PathFindingAlgorithm import AStarAlgorithm, BreadthFirstSearch, DijkstraSearch, PathFindingAlgorithm
 from UserInterface.GridWidget import SolverGridWidget
 from Grid.GridMap import *
+from Grid.MazeGeneratingAlgorithm import *
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
 from PyQt5.QtWidgets import *  
@@ -67,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def generateRandomGrid(self):
-        self.gridWidget.grid = GridMatrix.createMaze(self.gridWidget.grid.rows, self.gridWidget.grid.columns)
+        self.gridWidget.grid = DfsMazeGenerator.generate(self.gridWidget.grid.rows, self.gridWidget.grid.columns)
 
         if self.gridWidget.grid.getCell(self.gridWidget.target):
             self.gridWidget.grid.resetCell(self.gridWidget.target)
@@ -269,7 +270,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(0, 0, 210, 512))
+        self.verticalLayoutWidget.setGeometry(QRect(0, 0, 210, 528))
         self.verticalLayoutWidget.setFixedSize(210, 528)
 
         self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget)

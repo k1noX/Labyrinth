@@ -4,6 +4,7 @@ import PyQt5.QtGui as QtGui
 
 from math import floor
 from typing import *
+import enum
 
 from Grid.GridMap import *
 from Algorithms.PathFindingAlgorithm import *
