@@ -243,7 +243,7 @@ class SolverGridWidget(WallGridWidget):
 
 
     def __dequeueSolveStep(self) -> None:
-        if self.solveQueue.queue.empty():
+        if self.solveQueue.isEmpty():
             self.state = SolverGridWidget.State.solved
         else:
             used, selected, current = self.solveQueue.dequeue()
@@ -312,7 +312,7 @@ class SolverGridWidget(WallGridWidget):
         result = self.solve()
 
         if result is not None:
-            while not self.solveQueue.queue.empty():
+            while not self.solveQueue.isEmpty():
                 used, _, _ = self.solveQueue.dequeue()
                 self.used = {*self.used, *used}
 

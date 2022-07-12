@@ -15,16 +15,20 @@ class SolveQueue():
 
 
     def __init__(self):
-        self.queue = Queue()
+        self.__queue = Queue()
 
 
     def enqueue(self, used: List[Tuple[int, int]], path: List[int], selected: Tuple[int, int]):
-        self.queue.put(SolveQueue.SolveStep(used, path, selected))
+        self.__queue.put(SolveQueue.SolveStep(used, path, selected))
     
 
     def dequeue(self) -> Tuple[List[Tuple[int, int]], Tuple[int, int]]:
-        result = self.queue.get().properties
+        result = self.__queue.get().properties
         return (result['used'], result['cameFrom'], result['selected'])
+
+
+    def isEmpty(self) -> bool:
+        return self.__queue.empty()
 
 
 class PathFindingAlgorithm(ABC):
@@ -60,19 +64,19 @@ class PathFindingAlgorithm(ABC):
 
 
     @staticmethod
-    def cost(from_node, to_node) -> float:
-        prev_cost = 1
+    def _getCost(fromNode: Tuple[int, int], toNode: Tuple[int, int]) -> float:
+        prevCost = 1
         nudge = 0
-        (x1, y1) = from_node
-        (x2, y2) = to_node
+        (x1, y1) = fromNode
+        (x2, y2) = toNode
         if (x1 + y1) % 2 == 0 and x2 != x1: nudge = 1
         if (x1 + y1) % 2 == 1 and y2 != y1: nudge = 1
-        return prev_cost + 0.001 * nudge
+        return prevCost + 0.001 * nudge
         
 
 
 
-class BreadthFirstSearch(PathFindingAlgorithm):
+class BreadthFirstSearchAlgorithm(PathFindingAlgorithm):
 
     @staticmethod
     def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
@@ -131,7 +135,7 @@ class BreadthFirstSearch(PathFindingAlgorithm):
 
 
 
-class DijkstraSearch(PathFindingAlgorithm):
+class DijkstraSearchAlgorithm(PathFindingAlgorithm):
 
     @staticmethod
     def solve(gridMatrix: GridMatrix, source: Tuple[int, int], target: Tuple[int, int]):
@@ -151,7 +155,7 @@ class DijkstraSearch(PathFindingAlgorithm):
             
 
             for next in gridMatrix.neighbors(current):
-                newCost = costSoFar[current] + PathFindingAlgorithm.cost(current, next)
+                newCost = costSoFar[current] + PathFindingAlgorithm._getCost(current, next)
                
                 if next not in costSoFar or newCost < costSoFar[next]:
                     costSoFar[next] = newCost
@@ -185,7 +189,7 @@ class DijkstraSearch(PathFindingAlgorithm):
             selected = set()
 
             for next in gridMatrix.neighbors(current):
-                newCost = costSoFar[current] + PathFindingAlgorithm.cost(current, next)
+                newCost = costSoFar[current] + PathFindingAlgorithm._getCost(current, next)
                 queue.enqueue(selected, cameFrom, next)
                 if next not in costSoFar or newCost < costSoFar[next]:
                     selected.add(next)
@@ -224,7 +228,7 @@ class AStarAlgorithm(PathFindingAlgorithm):
                 break
             
             for next in gridMatrix.neighbors(current):
-                newCost = costSoFar[current] + PathFindingAlgorithm.cost(current, next)
+                newCost = costSoFar[current] + PathFindingAlgorithm._getCost(current, next)
                 if next not in costSoFar or newCost < costSoFar[next]:
                     costSoFar[next] = newCost
                     priority = newCost + AStarAlgorithm._heuristic(next, target)
@@ -255,7 +259,7 @@ class AStarAlgorithm(PathFindingAlgorithm):
             selected = set()
 
             for next in gridMatrix.neighbors(current):
-                newCost = costSoFar[current] + PathFindingAlgorithm.cost(current, next)
+                newCost = costSoFar[current] + PathFindingAlgorithm._getCost(current, next)
                 queue.enqueue(selected, cameFrom, next)
                 if next not in costSoFar or newCost < costSoFar[next]:
                     selected.add(next)
