@@ -142,15 +142,15 @@ class SolverGridWidget(WallGridWidget):
 
 
     def resizeGrid(self, rows: int, columns: int) -> None:
-        self.grid.resize(rows, columns)
+        self.grid.tryResize(rows, columns)
 
         if self.target[0] >= self.grid.rows or self.target[1] >= self.grid.columns:
             self.target = (0, 0)
-            self.grid.resetCell(self.target)
+            self.grid.tryResetCell(self.target)
 
         if self.source[0] >= self.grid.rows or self.source[1] >= self.grid.columns:
             self.source = (self.grid.rows - 1, self.grid.columns - 1)
-            self.grid.resetCell(self.source)
+            self.grid.tryResetCell(self.source)
 
         self.setSquareSize()
         self.update()
@@ -397,9 +397,9 @@ class SolverGridWidget(WallGridWidget):
         if (x >= left) & (x <= left + width) & (y >= top) & (y <= top + height):
             if self.drawMode == SolverGridWidget.DrawMode.walls:
                 if self.state == SolverGridWidget.State.drawing:
-                    self.grid.setCell((j, i))
+                    self.grid.trySetCell((j, i))
                 elif self.state == SolverGridWidget.State.erasing:
-                    self.grid.resetCell((j, i))  
+                    self.grid.tryResetCell((j, i))  
 
             elif self.drawMode == SolverGridWidget.DrawMode.target:
                 if self.state == SolverGridWidget.State.drawing:

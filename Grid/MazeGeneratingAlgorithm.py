@@ -49,11 +49,11 @@ class DfsMazeGenerator(MazeGeneratingAlgorithm):
 
         for x in range(floor((result.rows - 1) / 2) * 2 + 1, result.rows):
             for y in range(result.columns):
-                result.resetCell((x, y))
+                result.tryResetCell((x, y))
 
         for y in range(floor((result.columns - 1) / 2) * 2 + 1, result.columns):
             for x in range(result.rows):
-                result.resetCell((x, y))
+                result.tryResetCell((x, y))
                 
 
         x = randint(0, floor((result.rows - 1) / 2)) * 2 
@@ -72,22 +72,22 @@ class DfsMazeGenerator(MazeGeneratingAlgorithm):
                 randomIndex = randint(0, len(neighbors) - 1)
 
                 for i in range(len(neighbors)):
-                    result.resetCell(neighbors[i])
+                    result.tryResetCell(neighbors[i])
                     visited.add(neighbors[i])
 
                     if neighbors[i][0] == cell[0]:
                         if neighbors[i][1] < cell[1]:
-                            result.resetCell((neighbors[i][0], neighbors[i][1] + 1))
+                            result.tryResetCell((neighbors[i][0], neighbors[i][1] + 1))
                             
                         elif neighbors[i][1] > cell[1]:
-                            result.resetCell((neighbors[i][0], neighbors[i][1] - 1))
+                            result.tryResetCell((neighbors[i][0], neighbors[i][1] - 1))
                         
                     elif neighbors[i][1] == cell[1]:
                         if neighbors[i][0] < cell[0]:
-                            result.resetCell((neighbors[i][0] + 1, neighbors[i][1]))
+                            result.tryResetCell((neighbors[i][0] + 1, neighbors[i][1]))
                             
                         elif neighbors[i][0] > cell[0]:
-                            result.resetCell((neighbors[i][0] - 1, neighbors[i][1]))
+                            result.tryResetCell((neighbors[i][0] - 1, neighbors[i][1]))
 
                     if i != randomIndex:
                         

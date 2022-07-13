@@ -1,8 +1,12 @@
+from tkinter import filedialog
 from typing import Dict
 from Algorithms.PathFindingAlgorithm import AStarAlgorithm, BreadthFirstSearchAlgorithm, DijkstraSearchAlgorithm, PathFindingAlgorithm
 from UserInterface.GridWidget import SolverGridWidget
 from Grid.GridMap import *
 from Grid.MazeGeneratingAlgorithm import *
+from FileSystem.GridFileException import *
+from FileSystem.GridFileLoader import *
+from FileSystem.GridFileSaver import *
 
 from PyQt5.QtCore import (QMetaObject, QRect, Qt)
 from PyQt5.QtWidgets import *  
@@ -28,6 +32,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.drawModeComboBox.setEnabled(False)
         self.algorithmComboBox.setEnabled(False)
         self.intervalSlider.setEnabled(False)
+        self.filepickerLoadButton.setEnabled(False)
+        self.filepickerSaveButton.setEnabled(False)
 
 
     def enableGridEditing(self):
@@ -37,6 +43,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.drawModeComboBox.setEnabled(True)
         self.algorithmComboBox.setEnabled(True)
         self.intervalSlider.setEnabled(True)
+        self.filepickerLoadButton.setEnabled(True)
+        self.filepickerSaveButton.setEnabled(True)
 
 
     def onStateChanged(self) -> None:
@@ -63,7 +71,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gridWidget.resizeGrid(floor(self.rowSlider.value() / 100 * 90) + 10, 
             floor(self.columnSlider.value() / 100 * 90) + 10)
         
-        self.rowLabel.setText("Количество столбцов: " + str(self.gridWidget.grid.rows))
+        self.rowLabel.setText("Количество строк: " + str(self.gridWidget.grid.rows))
         self.columnLabel.setText("Количество столбцов: " + str(self.gridWidget.grid.columns))
 
 
@@ -71,10 +79,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gridWidget.grid = DfsMazeGenerator.generate(self.gridWidget.grid.rows, self.gridWidget.grid.columns)
 
         if self.gridWidget.grid.getCell(self.gridWidget.target):
-            self.gridWidget.grid.resetCell(self.gridWidget.target)
+            self.gridWidget.grid.tryResetCell(self.gridWidget.target)
 
         if self.gridWidget.grid.getCell(self.gridWidget.source):
-            self.gridWidget.grid.resetCell(self.gridWidget.source)
+            self.gridWidget.grid.tryResetCell(self.gridWidget.source)
 
         self.update()
 
@@ -100,6 +108,80 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def changeInterval(self):
         self.gridWidget.interval = floor(self.intervalSlider.value() / 100 * 990) + 10
+
+    
+    def saveFile(self):
+        fileDialog = QFileDialog(self)
+        fileDialog.setFileMode(QFileDialog.FileMode.AnyFile)
+        fileDialog.setNameFilter("Текстовые файлы (*.txt)")
+
+        if fileDialog.exec():
+            filename = fileDialog.selectedFiles()[0]
+            saver = GridFileSaver(self.gridWidget.grid, filename)
+            
+            try:
+                saver.save()
+            except GridFileException as e:
+                messageBox = QtWidgets.QMessageBox()
+                messageBox.setIcon(QtWidgets.QMessageBox.Warning)
+                messageBox.setText("Ошибка сохранения файла!")
+                messageBox.setInformativeText(str(e))
+                messageBox.setWindowTitle("Ошибка!")
+                messageBox.exec()
+
+
+    def loadFile(self):
+        fileDialog = QFileDialog(self)
+        fileDialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        fileDialog.setNameFilter("Текстовые файлы (*.txt)")
+
+        if fileDialog.exec():
+            filename = fileDialog.selectedFiles()[0]
+        
+            loader = GridFileLoader(filename)
+                
+            try:
+                self.gridWidget.grid = loader.load()
+                self.gridWidget.resizeGrid(self.gridWidget.grid.rows, self.gridWidget.grid.columns)
+                self.update()
+                
+                self.rowSlider.setValue(floor(10 * self.gridWidget.grid.rows - 100) / 9)
+                self.columnSlider.setValue(floor(10 * self.gridWidget.grid.columns - 100) / 9)
+
+            except GridFileException as e:
+                messageBox = QtWidgets.QMessageBox(fileDialog)
+                messageBox.setIcon(QtWidgets.QMessageBox.Warning)
+                messageBox.setText("Ошибка загрузки файла!")
+                messageBox.setInformativeText(str(e))
+                messageBox.setWindowTitle("Ошибка!")
+                messageBox.exec_()
+
+
+
+    def setupFileGroupBox(self):
+        self.filepickerGroupBox = QGroupBox(self.settingsGroupBox)
+        self.filepickerGroupBox.setTitle("Файловая система")
+        
+        self.filepickerLayoutWidget = QWidget(self.filepickerGroupBox)
+        self.filepickerLayoutWidget.setObjectName(u"filepickerLayoutWidget")
+        self.filepickerLayoutWidget.setGeometry(QRect(8, 16, 150, 128))
+
+        layout = QVBoxLayout(self.filepickerLayoutWidget)
+        self.settingsLayout.addWidget(self.filepickerGroupBox)
+
+        self.filepickerLoadButton = QPushButton()
+        self.filepickerLoadButton.setObjectName(u"filepickerLoadButton")
+        self.filepickerLoadButton.setText("Загрузить")
+        self.filepickerLoadButton.clicked.connect(self.loadFile)
+        layout.addWidget(self.filepickerLoadButton)
+
+        self.filepickerSaveButton = QPushButton()
+        self.filepickerSaveButton.setObjectName(u"filepickerSaveButton")
+        self.filepickerSaveButton.setText("Сохранить")
+        self.filepickerSaveButton.clicked.connect(self.saveFile)
+        layout.addWidget(self.filepickerSaveButton)
+
+        self.filepickerGroupBox.setLayout(layout)
 
 
     def setupGridSizeGroupBox(self):
@@ -163,19 +245,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settingsGroupBox = QGroupBox(self.centralwidget)
         self.settingsGroupBox.setObjectName(u"groupBox")
         self.settingsGroupBox.setTitle("Редактирование сетки лабиринта")
-        self.settingsGroupBox.setFixedHeight(352)
+        self.settingsGroupBox.setFixedHeight(410)
 
         self.settingsLayoutWidget = QWidget(self.settingsGroupBox)
         self.settingsLayoutWidget.setObjectName(u"settingsLayoutWidget")
-        self.settingsLayoutWidget.setGeometry(QRect(8, 16, 176, 320))
+        self.settingsLayoutWidget.setGeometry(QRect(8, 16, 176, 390))
 
         self.settingsLayout = QVBoxLayout(self.settingsLayoutWidget)
         self.settingsLayout.setObjectName(u"settingsLayout")
         self.settingsLayout.setContentsMargins(8, 8, 8, 8)
         self.verticalLayout.addWidget(self.settingsGroupBox)
 
+        self.setupFileGroupBox()
         self.setupGridSizeGroupBox()
         self.setupMazeGenerationGroupBox()
+        self.setupPaintGroupBox()
 
 
     def setupPaintGroupBox(self):
@@ -270,14 +354,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(0, 0, 210, 528))
-        self.verticalLayoutWidget.setFixedSize(210, 528)
+        self.verticalLayoutWidget.setGeometry(QRect(0, 0, 210, 582))
+        self.verticalLayoutWidget.setFixedSize(210, 582)
 
         self.verticalLayout = QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
 
         self.setupSettingsGroupBox()
-        self.setupPaintGroupBox()
         self.setupAlgorithmGroupBox()
 
         self.gridWidget = SolverGridWidget(50, 50, self.centralwidget)

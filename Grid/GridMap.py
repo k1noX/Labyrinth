@@ -13,10 +13,6 @@ class GridMatrix():
     def inBounds(self, cell: Tuple[int, int]) -> bool:
         (x, y) = cell
         return 0 <= x < self.rows and 0 <= y < self.columns
-    
-
-    def passable(self, id: Tuple[int, int]) -> bool:
-        return not self._cells[id[0]][id[1]]
 
 
     def neighbors(self, id: Tuple[int, int]) -> Iterator[Tuple[int, int]]:
@@ -24,24 +20,39 @@ class GridMatrix():
         neighbors = [(x + 1, y), (x - 1, y), (x, y - 1), (x, y + 1)] 
         if (x + y) % 2 == 0: neighbors.reverse() 
         results = filter(self.inBounds, neighbors)
-        results = filter(self.passable, results)
+        results = filter(lambda x: not self.getCell(x), results)
         return results
 
 
-    def resize(self, rows: int, columns: int) -> None:
-        self._cells = [[self._cells[j][i] if (j < self.rows and i < self.columns) else False for i in range(columns)] for j in range(rows)]
-        self.rows = rows
-        self.columns = columns
+    def tryResize(self, rows: int, columns: int) -> bool:
+        if rows > 9 and columns > 9:
+            self._cells = [[self._cells[j][i] if (j < self.rows and i < self.columns) else False for i in range(columns)] for j in range(rows)]
+            self.rows = rows
+            self.columns = columns
+            return True
+        else:
+            return False
 
 
-    def setCell(self, cell: Tuple[int, int]):
-        self._cells[cell[0]][cell[1]] = True
+    def trySetCell(self, cell: Tuple[int, int]) -> bool:
+        if self.inBounds(cell):
+            self._cells[cell[0]][cell[1]] = True
+            return True
+        else:
+            return False
 
 
-    def resetCell(self, cell: Tuple[int, int]):
-        self._cells[cell[0]][cell[1]] = False
+    def tryResetCell(self, cell: Tuple[int, int]) -> bool:
+        if self.inBounds(cell):
+            self._cells[cell[0]][cell[1]] = False
+            return True
+        else:
+            return False
 
 
     def getCell(self, cell: Tuple[int, int]) -> bool:
-        return self._cells[cell[0]][cell[1]]
+        if self.inBounds(cell):
+            return self._cells[cell[0]][cell[1]]
+        else:
+            return False
 
