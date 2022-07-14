@@ -111,12 +111,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     
     def saveFile(self):
-        fileDialog = QFileDialog(self)
-        fileDialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        fileDialog.setNameFilter("Текстовые файлы (*.txt)")
+        filename, _ = QFileDialog.getSaveFileName(self, "Текстовые файлы (*.txt)")
 
-        if fileDialog.exec():
-            filename = fileDialog.selectedFiles()[0]
+        if filename:
             saver = GridFileSaver(self.gridWidget.grid, filename)
             
             try:
